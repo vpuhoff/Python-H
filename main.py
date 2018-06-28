@@ -44,7 +44,7 @@ def send_sms():
     if not message:
         return ('Please enter message'), 400
     try:
-        SendSMS('+79243132456','tester')
+        SendSMS(to,message)
     except Exception as e:
         return 'An error occurred: {}'.format(e), 500
 

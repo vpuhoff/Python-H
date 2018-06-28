@@ -1,32 +1,33 @@
-# Copyright 2015 Google Inc. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
 
-# [START app]
+import requests
+import json
+
+
+
 import logging
 import os
 
 from flask import Flask, render_template, request
-import sendgrid
-from sendgrid.helpers import mail
+
 
 # [START config]
-SENDGRID_API_KEY = os.environ['SENDGRID_API_KEY']
-SENDGRID_SENDER = os.environ['SENDGRID_SENDER']
+#SENDGRID_API_KEY = os.environ['SENDGRID_API_KEY']
+#SENDGRID_SENDER = os.environ['SENDGRID_SENDER']
 # [END config]
 
 app = Flask(__name__)
 
+def SendSMS(phone, message):
+    url = 'https://llamalab.com/automate/cloud/message'
+    headers = {'Content-type': 'application/json'}
+    payload =json.dumps({
+        "secret": "1.IsCmZnfHe-m-gF2DB6lsSvtkaM6R0uNsLyVLs1RSvWA=",
+        "to": "vpuhoff92@gmail.com",
+        "device":None,
+        "payload": phone+";"+message.replace(';',':')
+    })
+    r = requests.post(url, data=payload, headers=headers)
+    return r.reason
 
 @app.route('/')
 def index():
@@ -34,27 +35,20 @@ def index():
 
 
 # [START example]
-@app.route('/send/email', methods=['POST'])
-def send_email():
-    to = request.form.get('to')
+@app.route('/send/sms', methods=['POST'])
+def send_sms():
+    to = request.form.get('phone')
+    message = request.form.get('message')
     if not to:
-        return ('Please provide an email address in the "to" query string '
-                'parameter.'), 400
+        return ('Please enter phone number '), 400
+    if not message:
+        return ('Please enter message'), 400
+    try:
+        SendSMS('+79243132456','tester')
+    except Exception as e:
+        return 'An error occurred: {}'.format(e), 500
 
-    sg = sendgrid.SendGridAPIClient(apikey=SENDGRID_API_KEY)
-
-    to_email = mail.Email(to)
-    from_email = mail.Email(SENDGRID_SENDER)
-    subject = 'This is a test email'
-    content = mail.Content('text/plain', 'Example message.')
-    message = mail.Mail(from_email, subject, to_email, content)
-
-    response = sg.client.mail.send.post(request_body=message.get())
-
-    if response.status_code != 202:
-        return 'An error occurred: {}'.format(response.body), 500
-
-    return 'Email sent.'
+    return 'Message sent.'
 # [END example]
 
 

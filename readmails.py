@@ -42,7 +42,7 @@ def SendSMS(phone, message):
     r = requests.post(url, data=payload, headers=headers)
     return r.reason
 
-
+import string
 def main_loop_proc():
     print("Connecting to {}...".format(server))
     imap = imaplib.IMAP4_SSL(server)
@@ -61,15 +61,19 @@ def main_loop_proc():
         msg = email.message_from_string(msg_raw.decode())
         payload = msg.get_payload()[ 0 ]
         text = quopri.decodestring(payload.get_payload())
-        print(text)
-        SendSMS('+79243132456',text)
+        #print(text)
+        printable = text.decode('utf-8')
+        print(printable)
+        SendSMS('+79243132456',printable)
+        SendSMS('+79183432881',text)
         imap.store(msg_id, '+FLAGS', '\\Deleted')
     imap.expunge()
     imap.logout()
 from datetime import datetime
 #while True:
+main_loop_proc()
 try:
-    main_loop_proc()
+    
     SendSMS('+79243132456',str(datetime.now())+" Служба отправки СМС: Ошибок нет.")
 except Exception as e:
     print("ERROR:" + str(e))

@@ -1,2 +1,2 @@
-cd /home/vpuhoff92/Python-H/
-python readmails.py
+cd "/home/vpuhoff/Рабочий стол/Develop/Transfer/Python-H/"
+python3 readmails.py

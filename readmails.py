@@ -66,12 +66,13 @@ def main_loop_proc():
         imap.store(msg_id, '+FLAGS', '\\Deleted')
     imap.expunge()
     imap.logout()
-
-while True:
-    try:
-        main_loop_proc()
-    except Exception as e:
-        print("ERROR:" + str(e))
-        SendSMS('+79243132456',"ERROR:" + str(e))
-    print("Sleeping {} seconds...".format(pause_time))
-    time.sleep(pause_time)
+from datetime import datetime
+#while True:
+try:
+    main_loop_proc()
+    SendSMS('+79243132456',str(datetime.now())+" Служба отправки СМС: Ошибок нет.")
+except Exception as e:
+    print("ERROR:" + str(e))
+    SendSMS('+79243132456',"ERROR:" + str(e))
+#print("Sleeping {} seconds...".format(pause_time))
+#time.sleep(pause_time)

@@ -19,12 +19,11 @@ import sys
 
 server = 'smtp.gmail.com'
 login = "site.06.2018@gmail.com"
+password='!Ntoaa123'
+
 pause_time = 300
 import hashlib
-#print(hashlib.sha1(b"qwerty").hexdigest())
-#pwhash = 'b1b3773a05c0ed0176787a4f1574ff0075f7521e'
-#password = 
-password=getpass.getpass("IMAP Password: ")
+
 import quopri
 import base64
 

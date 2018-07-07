@@ -1,21 +1,27 @@
-
+import logging
+logging.basicConfig(filename='Events.log',level=logging.DEBUG)
 import requests
 import json
-import logging
 import os
 from flask import Flask, render_template, request
 import raven
 import string
 import hvac
+
+logging.debug('Connect vault...')
+
 vault = hvac.Client(url='http://80.211.91.158:8200', token=os.environ['VAULT_TOKEN'])
 
+logging.debug('Get secrets...')
 sentry_data = vault.read('secret/sentry')['data']
 gate_data = vault.read('secret/automate-cloud')['data']
 support_data = vault.read('secret/support')['data']
 
+logging.debug('Connect sentry...')
 sentry = raven.Client(sentry_data['url'])
 sentry.captureMessage('Restart application!',level='info')
 
+logging.debug('Init Flask...')
 app = Flask(__name__)
 
 class Del:
@@ -46,7 +52,9 @@ def SendSMS(phone_raw, message):
         return r.reason
     except Exception:
         sentry.captureException()
+        logging.exception(e) 
     
+
 @app.route('/gate')
 def gate():
     return render_template('index.html')
@@ -72,6 +80,7 @@ def callback():
         sentry.captureException(
             extra={'Form data':request.form})
         return 'An error occurred: {}'.format(e), 500
+        logging.exception(e) 
     return render_template('callback_ok.html')
 
 
@@ -88,6 +97,8 @@ def send_sms():
         sentry.captureMessage('Send SMS via API',level='info', extra={'to':to,'message':message})
         SendSMS(to,message)
     except Exception as e:
+        logging.exception(e) 
+        sentry.captureException(e,level='fatal')
         return 'An error occurred: {}'.format(e), 500
 
     return 'OK',200
@@ -100,17 +111,25 @@ def server_error(e):
     return """    An internal error occurred: <pre>{}</pre>    See logs for full stacktrace.    """.format(e), 500
 
 if __name__ == '__main__':
+    logging.debug('Check platform...')
     from sys import platform
     if platform == "linux" or platform == "linux2":
         # linux
+        logging.debug('Platform: linux')
+        logging.debug('Init daemon tools...')
         import daemon
         try:
             with daemon.DaemonContext():
+                logging.debug('Run main loop thread...')
                 app.run(host='0.0.0.0', port=8080, debug=False)
         except Exception as e:
             sentry.captureException(e,level='fatal')
+            logging.exception(e) 
     elif platform == "win32":  
         try:
+            logging.debug('Platform: windows')
+            logging.debug('Run main loop thread...')
             app.run(host='0.0.0.0', port=8080, debug=False)
         except Exception as e:
-            sentry.captureException(e,level='fatal')      
+            sentry.captureException(e,level='fatal')     
+            logging.exception(e) 

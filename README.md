@@ -1,2 +1,2 @@
-# Python Send SMS sample for Google App Engine Flexible
+# Python SMS Gate server on Flask
 

@@ -116,12 +116,12 @@ if __name__ == '__main__':
     if platform == "linux" or platform == "linux2":
         # linux
         logging.debug('Platform: linux')
-        logging.debug('Init daemon tools...')
-        import daemon
+        #logging.debug('Init daemon tools...')
+        #import daemon
         try:
-            with daemon.DaemonContext():
-                logging.debug('Run main loop thread...')
-                app.run(host='0.0.0.0', port=8080, debug=False)
+            #with daemon.DaemonContext():
+            logging.debug('Run main loop thread...')
+            app.run(host='0.0.0.0', port=8080, debug=False)
         except Exception as e:
             sentry.captureException(e,level='fatal')
             logging.exception(e) 

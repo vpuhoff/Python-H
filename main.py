@@ -6,7 +6,6 @@ import logging
 import os
 import hvac
 
-client = hvac.Client()
 client = hvac.Client(url='http://80.211.91.158:8200', token=os.environ['VAULT_TOKEN'])
 
 #smtp = client.read('secret/ekaterina-gadanie.com')['data']
@@ -61,9 +60,10 @@ def callback():
     try:
         SendSMS(to,'Заказ звонка: '+message)
     except Exception as e:
+        SendSMS(to,'Error: {}'.format(e))
         return 'An error occurred: {}'.format(e), 500
 
-    return 'Message sent.'
+    return render_template('callback_ok.html')
 
 
 # [START example]

@@ -129,7 +129,7 @@ if __name__ == '__main__':
         try:
             logging.debug('Platform: windows')
             logging.debug('Run main loop thread...')
-            app.run(host='0.0.0.0', port=8080, debug=False)
+            app.run(host='0.0.0.0', port=8080, debug=True)
         except Exception as e:
             sentry.captureException(e,level='fatal')     
             logging.exception(e) 

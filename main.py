@@ -37,6 +37,7 @@ logging.debug('Get secrets...')
 sentry_data = vault.read('secret/sentry')['data']
 gate_data = vault.read('secret/automate-cloud')['data']
 support_data = vault.read('secret/support')['data']
+contact_data = vault.read('secret/contact')['data']
 
 logging.debug('Connect sentry...')
 sentry = raven.Client(sentry_data['url'])
@@ -71,9 +72,10 @@ def SendSMS(phone_raw, message):
         'raw_phone':phone_raw,
         'message':message} ,level='info')
         return r.reason
-    except Exception:
-        sentry.captureException()
+    except Exception as e:
         logging.exception(e) 
+        sentry.captureException()
+        
     
 
 @app.route('/gate')
@@ -86,22 +88,38 @@ def index():
 
 @app.route('/gate/callback_form')
 def callback_form():
-    sentry.captureMessage('Render Callback form!',level='info')
+    sentry.captureMessage('Render Callback form simple!',level='info')
     return render_template('callback_form.html')    
+
+@app.route('/gate/callback_form/<contact_id>')
+def callback_form_contact(contact_id):
+    sentry.captureMessage('Render Callback form!',level='info')
+    return render_template('callback_form_contact.html',contact_id=contact_id)    
+
 
 @app.route('/gate/callback', methods=['POST'])
 def callback():
     try:
-        to = support_data['phone']
-        message = request.form.get('name')+': '+request.form.get('phone')
+        logging.debug(str(request.form))
+        message = request.form.get('name')+' ('+request.form.get('phone')+')'
+        contact_id = request.form.get('contact')
+        to = 'none'
+        if  contact_id:
+            if contact_id in contact_data.keys():
+                to = contact_data[contact_id]
+            else:
+                raise Exception(contact_id+' not found in contact_data')
+        else:
+            to = contact_data['support']
         if not to:
-            return ('Please enter phone number '), 400
+            raise Exception('Target phone is None!')
+
         SendSMS(to,'Заказ звонка: '+message)
     except Exception as e:
+        logging.exception(e) 
         sentry.captureException(
             extra={'Form data':request.form})
         return 'An error occurred: {}'.format(e), 500
-        logging.exception(e) 
     return render_template('callback_ok.html')
 
 
@@ -127,8 +145,8 @@ def send_sms():
 
 @app.errorhandler(500)
 def server_error(e):
-    sentry.captureException(e,level='fatal')
     logging.exception('An error occurred during a request.')
+    sentry.captureException(e,level='fatal')
     return """    An internal error occurred: <pre>{}</pre>    See logs for full stacktrace.    """.format(e), 500
 
 if __name__ == '__main__':
@@ -144,13 +162,15 @@ if __name__ == '__main__':
             logging.debug('Run main loop thread...')
             app.run(host='0.0.0.0', port=8080, debug=True)
         except Exception as e:
-            sentry.captureException(e,level='fatal')
             logging.exception(e) 
+            sentry.captureException(e,level='fatal')
+            
     elif platform == "win32":  
         try:
             logging.debug('Platform: windows')
             logging.debug('Run main loop thread...')
             app.run(host='0.0.0.0', port=8080, debug=True)
         except Exception as e:
-            sentry.captureException(e,level='fatal')     
             logging.exception(e) 
+            sentry.captureException(e,level='fatal')     
+            

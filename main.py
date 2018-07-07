@@ -43,15 +43,19 @@ def SendSMS(phone_raw, message):
     r = requests.post(url, data=payload, headers=headers)
     return r.reason
 
+@app.route('/gate')
+def index():
+    return render_template('index.html')
+    
 @app.route('/')
 def index():
     return render_template('index.html')
 
-@app.route('/callback_form')
+@app.route('/gate/callback_form')
 def callback_form():
     return render_template('callback_form.html')    
 
-@app.route('/callback', methods=['POST'])
+@app.route('/gate/callback', methods=['POST'])
 def callback():
     to = '+79243132456'
     message = request.form.get('name')+': '+request.form.get('phone')
@@ -67,7 +71,7 @@ def callback():
 
 
 # [START example]
-@app.route('/send/sms', methods=['POST'])
+@app.route('/gate/send/sms', methods=['POST'])
 def send_sms():
     to = request.form.get('phone')
     message = request.form.get('message')

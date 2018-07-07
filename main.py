@@ -6,7 +6,6 @@ import os
 from flask import Flask, render_template, request
 import raven
 import string
-
 import hvac
 vault = hvac.Client(url='http://80.211.91.158:8200', token=os.environ['VAULT_TOKEN'])
 
@@ -101,7 +100,17 @@ def server_error(e):
     return """    An internal error occurred: <pre>{}</pre>    See logs for full stacktrace.    """.format(e), 500
 
 if __name__ == '__main__':
-    try:
-        app.run(host='0.0.0.0', port=8080, debug=False)
-    except Exception as e:
-        sentry.captureException(e,level='fatal')
+    from sys import platform
+    if platform == "linux" or platform == "linux2":
+        # linux
+        import daemon
+        try:
+            with daemon.DaemonContext():
+                app.run(host='0.0.0.0', port=8080, debug=False)
+        except Exception as e:
+            sentry.captureException(e,level='fatal')
+    elif platform == "win32":  
+        try:
+            app.run(host='0.0.0.0', port=8080, debug=False)
+        except Exception as e:
+            sentry.captureException(e,level='fatal')      

@@ -2,10 +2,16 @@ import smtplib
 import time
 import imaplib
 import email
+import os
+import hvac
 
-SMTP_SERVER='smtp.gmail.com'
-FROM_EMAIL='site.06.2018@gmail.com'
-FROM_PWD='!Ntoaa123'
+client = hvac.Client()
+client = hvac.Client(url='http://80.211.91.158:8200', token=os.environ['VAULT_TOKEN'])
+
+smtp = client.read('secret/ekaterina-gadanie.com')['data']
+SMTP_SERVER=smtp['smtp-server']
+FROM_EMAIL=smtp['email']
+FROM_PWD=smtp['password']
 # -------------------------------------------------
 #
 # Utility to read email from Gmail Using Python
@@ -16,6 +22,7 @@ from urllib.parse import urlencode
 from bs4 import BeautifulSoup
 import quopri
 import base64
+
 
 def read_email_from_gmail():
     print('Connecting...')

@@ -2,10 +2,14 @@
 import requests
 import json
 
-
-
 import logging
 import os
+import hvac
+
+client = hvac.Client()
+client = hvac.Client(url='http://80.211.91.158:8200', token=os.environ['VAULT_TOKEN'])
+
+#smtp = client.read('secret/ekaterina-gadanie.com')['data']
 
 from flask import Flask, render_template, request
 
@@ -16,9 +20,20 @@ from flask import Flask, render_template, request
 # [END config]
 
 app = Flask(__name__)
+import string
 
-def SendSMS(phone, message):
+class Del:
+  def __init__(self, keep=string.digits):
+    self.comp = dict((ord(c),c) for c in keep)
+  def __getitem__(self, k):
+    return self.comp.get(k)
+
+DD = Del()
+
+def SendSMS(phone_raw, message):
+    phone = '+'+phone_raw.translate(DD)
     url = 'https://llamalab.com/automate/cloud/message'
+
     headers = {'Content-type': 'application/json'}
     payload =json.dumps({
         "secret": "1.IsCmZnfHe-m-gF2DB6lsSvtkaM6R0uNsLyVLs1RSvWA=",
@@ -32,6 +47,23 @@ def SendSMS(phone, message):
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/callback_form')
+def callback_form():
+    return render_template('callback_form.html')    
+
+@app.route('/callback', methods=['POST'])
+def callback():
+    to = '+79243132456'
+    message = request.form.get('name')+': '+request.form.get('phone')
+    if not to:
+        return ('Please enter phone number '), 400
+    try:
+        SendSMS(to,'Заказ звонка: '+message)
+    except Exception as e:
+        return 'An error occurred: {}'.format(e), 500
+
+    return 'Message sent.'
 
 
 # [START example]

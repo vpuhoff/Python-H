@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 import logging
 logging.basicConfig(filename='Events.log',level=logging.DEBUG)
 import requests

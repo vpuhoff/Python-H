@@ -82,39 +82,6 @@ def send_sms():
 
     return 'Message sent.'
 # [END example]
-def main_loop_proc():
-    print("Connecting to {}...".format(server))
-    imap = imaplib.IMAP4_SSL(server)
-    print("Connected! Logging in as {}...".format(login))
-    imap.login(login, password)
-    print("Logged in! Listing messages...")
-    status, select_data = imap.select('INBOX')
-    nmessages = select_data[0].decode('utf-8')
-    status, search_data = imap.search(None, 'ALL')
-    for msg_id in search_data[0].split():
-        msg_id_str = msg_id.decode('utf-8')
-        print("Fetching message {} of {}".format(msg_id_str,
-                                                 nmessages))
-        status, msg_data = imap.fetch(msg_id, '(RFC822)')
-        msg_raw = msg_data[0][1]
-        msg = email.message_from_string(msg_raw.decode())
-        payload = msg.get_payload()[ 0 ]
-        text = quopri.decodestring(payload.get_payload())
-        print(text)
-        SendSMS('+79243132456',text)
-        imap.store(msg_id, '+FLAGS', '\\Deleted')
-    imap.expunge()
-    imap.logout()
-
-@app.route('/main/loop', methods=['GET'])
-def main_loop():
-    try:
-        main_loop_proc()
-        return 'OK.'
-    except Exception as e:
-        print("ERROR:" + str(e))
-        SendSMS('+79243132456',"ERROR:" + str(e))
-        server_error(e)
 
 @app.errorhandler(500)
 def server_error(e):
@@ -125,5 +92,5 @@ def server_error(e):
 if __name__ == '__main__':
     # This is used when running locally. Gunicorn is used to run the
     # application on Google App Engine. See entrypoint in app.yaml.
-    app.run(host='127.0.0.1', port=8080, debug=True)
+    app.run(host='0.0.0.0', port=8080, debug=False)
 # [END app]

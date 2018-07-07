@@ -45,7 +45,7 @@ def SendSMS(phone_raw, message):
         sentry.captureMessage('SMS Sended!',extra=
         {'phone':phone,
         'raw_phone':phone_raw,
-        'message':message} )
+        'message':message} ,level='info')
         return r.reason
     except Exception:
         sentry.captureException()

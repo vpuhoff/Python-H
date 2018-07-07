@@ -1,25 +1,23 @@
 
 import requests
 import json
-
 import logging
 import os
-import hvac
-
-vault = hvac.Client(url='http://80.211.91.158:8200', token=os.environ['VAULT_TOKEN'])
-
-
 from flask import Flask, render_template, request
 import raven
+import string
+
+import hvac
+vault = hvac.Client(url='http://80.211.91.158:8200', token=os.environ['VAULT_TOKEN'])
 
 sentry_data = vault.read('secret/sentry')['data']
 gate_data = vault.read('secret/automate-cloud')['data']
+support_data = vault.read('secret/support')['data']
 
 sentry = raven.Client(sentry_data['url'])
 sentry.captureMessage('Restart application!',level='info')
 
 app = Flask(__name__)
-import string
 
 class Del:
   def __init__(self, keep=string.digits):
@@ -66,7 +64,7 @@ def callback_form():
 @app.route('/gate/callback', methods=['POST'])
 def callback():
     try:
-        to = '+79243132456'
+        to = support_data['phone']
         message = request.form.get('name')+': '+request.form.get('phone')
         if not to:
             return ('Please enter phone number '), 400
@@ -93,17 +91,17 @@ def send_sms():
     except Exception as e:
         return 'An error occurred: {}'.format(e), 500
 
-    return 'Message sent.'
+    return 'OK',200
 # [END example]
 
 @app.errorhandler(500)
 def server_error(e):
+    sentry.captureException(e,level='fatal')
     logging.exception('An error occurred during a request.')
     return """    An internal error occurred: <pre>{}</pre>    See logs for full stacktrace.    """.format(e), 500
 
-
 if __name__ == '__main__':
-    # This is used when running locally. Gunicorn is used to run the
-    # application on Google App Engine. See entrypoint in app.yaml.
-    app.run(host='0.0.0.0', port=8080, debug=False)
-# [END app]
+    try:
+        app.run(host='0.0.0.0', port=8080, debug=False)
+    except Exception as e:
+        sentry.captureException(e,level='fatal')

@@ -44,9 +44,9 @@ def SendSMS(phone_raw, message):
     return r.reason
 
 @app.route('/gate')
-def index():
+def gate():
     return render_template('index.html')
-    
+
 @app.route('/')
 def index():
     return render_template('index.html')

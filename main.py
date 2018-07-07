@@ -13,7 +13,7 @@ from flask import Flask, render_template, request
 import raven
 
 sentry_data = vault.read('secret/sentry')['data']
-gate = vault.read('secret/automate-cloud')['data']
+gate_data = vault.read('secret/automate-cloud')['data']
 
 sentry = raven.Client(sentry_data['url'])
 sentry.captureMessage('Restart application!',level='info')
@@ -32,12 +32,12 @@ DD = Del()
 def SendSMS(phone_raw, message):
     try:
         phone = '+'+phone_raw.translate(DD)
-        url = gate['url']
+        url = gate_data['url']
 
         headers = {'Content-type': 'application/json'}
         payload =json.dumps({
-            "secret": gate['secret'],
-            "to": gate['worker'],
+            "secret": gate_data['secret'],
+            "to": gate_data['worker'],
             "device":None,
             "payload": phone+";"+message.replace(';',':')
         })

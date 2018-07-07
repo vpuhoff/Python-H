@@ -12,6 +12,26 @@ import hvac
 logging.debug('Connect vault...')
 
 vault = hvac.Client(url='http://80.211.91.158:8200', token=os.environ['VAULT_TOKEN'])
+import time
+
+retry_count = 0
+vault_state = 'connecting'
+while vault_state!='ready':
+    try:
+        res = vault.read('secret/support')['data']['check']
+        if res=='OK':
+            logging.debug('Vault ready!')
+            break
+        else:
+            logging.exception('Key Error: '+str(res))
+    except Exception as e:
+        logging.exception(e) 
+    retry_count=retry_count+1
+    if retry_count>5:
+        break
+    else:
+        logging.exception('Retry...'+str(retry_count))
+        time.sleep(3)
 
 logging.debug('Get secrets...')
 sentry_data = vault.read('secret/sentry')['data']

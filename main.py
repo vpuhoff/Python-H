@@ -2,13 +2,13 @@
 import logging
 logging.basicConfig(filename='Events.log',level=logging.DEBUG)
 logging.debug('Init global exeptions hook...')
-
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.StreamHandler().setFormatter(formatter)
 import sys
 def Global_Except_hook(exctype, value, traceback):
     logging.exception('Global Except: '+str([exctype, value, traceback]))
     sys.__excepthook__(exctype, value, traceback)
 sys.excepthook = Global_Except_hook
-
 
 import requests
 import json
@@ -21,7 +21,6 @@ logging.debug('Get current version...')
 
 from version import GetVersion
 curver = GetVersion()
-
 
 logging.debug(curver)
 
@@ -56,8 +55,7 @@ support_data = vault.read('secret/support')['data']
 contact_data = vault.read('secret/contact')['data']
 
 logging.debug('Connect sentry...')
-sentry = raven.Client(sentry_data['url'],release=curver)
-
+sentry = raven.Client(sentry_data['url'])
 sentry.captureMessage('Restart application!',level='info')
 
 logging.debug('ReInit global exeptions hook with sentry...')

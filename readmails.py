@@ -20,6 +20,7 @@ import sys
 import os
 import hvac
 
+
 client = hvac.Client(url='http://80.211.91.158:8200', token=os.environ['VAULT_TOKEN'])
 
 smtp = client.read('secret/ekaterina-gadanie.com')['data']

@@ -1,6 +1,15 @@
 #!/usr/bin/python3
 import logging
 logging.basicConfig(filename='Events.log',level=logging.DEBUG)
+logging.debug('Init global exeptions hook...')
+
+import sys
+def Global_Except_hook(exctype, value, traceback):
+    logging.exception('Global Except: '+str([exctype, value, traceback]))
+    sys.__excepthook__(exctype, value, traceback)
+sys.excepthook = Global_Except_hook
+
+
 import requests
 import json
 import os
@@ -8,8 +17,15 @@ from flask import Flask, render_template, request
 import raven
 import string
 import hvac
+logging.debug('Get current version...')
 
-logging.debug('Connect vault...')
+from version import GetVersion
+curver = GetVersion()
+
+
+logging.debug(curver)
+
+logging.debug('Connecting to vault...')
 
 vault = hvac.Client(url='http://80.211.91.158:8200', token=os.environ['VAULT_TOKEN'])
 import time
@@ -40,8 +56,21 @@ support_data = vault.read('secret/support')['data']
 contact_data = vault.read('secret/contact')['data']
 
 logging.debug('Connect sentry...')
-sentry = raven.Client(sentry_data['url'])
+sentry = raven.Client(sentry_data['url'],release=curver)
+
 sentry.captureMessage('Restart application!',level='info')
+
+logging.debug('ReInit global exeptions hook with sentry...')
+def Global_Except_hook_with_sentry(exctype, value, traceback):
+    print(exctype, value, traceback)
+    logging.exception('Global Except: '+str([ exctype, traceback]))
+    try:
+        raise value
+    except Exception:
+        sentry.captureException(
+        extra={'value':value,'traceback':traceback})
+    sys.__excepthook__(exctype, value, traceback)
+sys.excepthook = Global_Except_hook_with_sentry
 
 logging.debug('Init Flask...')
 app = Flask(__name__)

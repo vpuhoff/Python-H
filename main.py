@@ -8,6 +8,7 @@ import sys
 def Global_Except_hook(exctype, value, traceback):
     logging.exception('Global Except: '+str([exctype, value, traceback]))
     sys.__excepthook__(exctype, value, traceback)
+    
 sys.excepthook = Global_Except_hook
 
 import requests
